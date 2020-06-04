@@ -294,6 +294,104 @@ def getAlpacaDataLong(ticker,interval='minute'):
     except:
         print('failed to pull data from alpaca')
 
+def calc_macD(ticker,interval='minute'):
+    barset = api_weekly.get_barset(ticker,interval,limit=55)
+    df_all = pd.DataFrame()
+    infoList=[]
+    keyList=[]
+
+    for bar in barset:
+        bars=barset[bar]
+
+        barList = []
+        for index in range(55):
+            x=54-index
+            barList.append(bars[x].c)
+
+        df_new = pd.DataFrame()
+        df_new['close'] = barList
+
+        valueList =[] 
+        for index, value in enumerate(df_new['close']):
+            if index < 11:
+                valueList.append(df_new['close'][index:3+index].mean())
+            else:
+                valueList.append('NaN')
+        df_new['sma1'] = valueList
+
+        valueList =[]
+        for index, value in enumerate(df_new['close']):
+            if index < 11:
+                valueList.append(df_new['close'][index:8+index].mean())
+            else:
+                valueList.append('NaN')
+        df_new['sma2'] = valueList
+
+        valueList =[]
+        for index, value in enumerate(df_new['close']):
+            if index < 11:
+                valueList.append(df_new['close'][index:21+index].mean())
+            else:
+                valueList.append('NaN')
+        df_new['sma3'] = valueList
+
+        ema12 = []
+        for index in range(55):
+            if index < 54-12:
+                ema12.append(df_new['close'][index:index+13].mean())
+            else:
+                ema12.append('NaN')
+              
+        df_new['ema12']=ema12
+
+        ema26=[]
+        for index in range(55):
+            if index < 54-26:
+                ema26.append(df_new['close'][index:index+27].mean())
+            else:
+                ema26.append('NaN')
+              
+        df_new['ema26']=ema26
+        a=2/13
+        for index in range(55):
+            x=54-index
+            if x < 13:
+                df_new.loc[x,'ema12'] = (float(df_new['close'][x])-float(df_new['ema12'][x+1]))*a+float(df_new['ema12'][x+1])
+        a=2/27
+        for index in range(55):
+            x=54-index
+            if x < 27:
+                df_new.loc[x,'ema26'] = (float(df_new['close'][x])-float(df_new['ema26'][x+1]))*a+float(df_new['ema26'][x+1])
+
+        macDList=[]
+        for index in range(55):
+            macDList.append(float(df_new['ema12'][index])-float(df_new['ema26'][index]))
+        
+        df_new['macD'] = macDList
+
+
+        signalList = []
+        for index in range(55):
+            if index < 54-9:
+                signalList.append(df_new['macD'][index:index+9].mean())
+            else:
+                signalList.append('NaN')
+              
+        df_new['signal']=signalList
+
+        a=2/10
+        for index in range(55):
+            x=54-index
+            if x < 10:
+                df_new.loc[x,'signal'] = (float(df_new['macD'][x])-float(df_new['signal'][x+1]))*a+float(df_new['signal'][x+1])
+
+        infoList.append(df_new)
+        keyList.append(bar)
+    df_all=pd.concat(infoList,keys=keyList, axis=0)
+    return df_all
+
+#print(calc_macD('AAPL,AMD,TSLA','minute'))
+
 def closePositions():
     try:
         api_day.close_all_positions()

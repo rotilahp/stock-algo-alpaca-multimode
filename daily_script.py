@@ -1,7 +1,8 @@
 from mystock import myStock
 from alpaca_test import (placeDayOrder,placeWeeklyOrder,dayInvStatus,
                         dayInv,weeklyInvStatus,closePositions,weeklyInv,
-                        marketHoursCheck,getPriceThree, getAlpacaDataLong)
+                        marketHoursCheck,getPriceThree, getAlpacaDataLong,
+                        calc_macD)
 import time
 from schedule import is_time_between_int
 import pandas as pd
@@ -39,7 +40,8 @@ def get_data():
     myString=''
     for stock in stocksList:
         myString+=f'{stock},'
-    df_all_data = getAlpacaDataLong(myString)
+    #df_all_data = getAlpacaDataLong(myString)
+    df_all_data=calc_macD(myString)
     return df_all_data
 
 def setup():
@@ -90,18 +92,20 @@ def weeklyLoop():
 
         if obj.weeklyInvState == True:
             print('Sell Check!')
-            stopAndTakeCheck(obj)
-            obj.smaDayTradeSell()
+            #stopAndTakeCheck(obj)
+            #obj.smaDayTradeSell()
+            obj.simple_ema_sell()
         elif obj.weeklyInvState == False:
             print('Buy Check!')
-            obj.smaDayTradeBuy()
+            #obj.smaDayTradeBuy()
+            obj.simple_ema_buy()
 
         if obj.buyState == True:
             print('Buying!')      
             currentPrice = getPriceThree(obj.ticker)       
             obj.weeklyInv = int(cashAmount/(len(weekList))/int(currentPrice))
-            obj.stopLoss = currentPrice * 0.985
-            obj.takeProfit = currentPrice * 1.03
+            #obj.stopLoss = currentPrice * 0.985
+            #obj.takeProfit = currentPrice * 1.03
             placeWeeklyOrder(obj.ticker,obj.weeklyInv,'buy')
             obj.buyState = False
             obj.weeklyInvState = True

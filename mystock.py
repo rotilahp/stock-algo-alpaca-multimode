@@ -80,7 +80,32 @@ class myStock:
             print('missing a list')
             self.getData()
             pass
+    def simple_ema_buy(self):
+        try:
+            df_macD=self._df_stock['macD']
+            if df_macD[0] > 0:
+                print('ema says to buy')
+                self._buyState=True
+        except:
+            print('missing a list')
+            pass
 
+    def simple_ema_sell(self):
+        try:
+            df_macD=self._df_stock['macD']
+            df_signal = self._df_stock['signal']
+
+            if df_macD[0] < 0 or df_signal[0]>df_macD[0] :
+                print('ema or signal says to sell')
+                self._sellState=True
+
+            elif df_signal[0] > 0.2:
+                print('momentum says to hold on')
+                self._sellState=False
+
+        except:
+            print('missing a list')
+            pass
     @property
     def buyState(self):
         return self._buyState
