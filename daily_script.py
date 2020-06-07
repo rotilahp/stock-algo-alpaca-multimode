@@ -13,8 +13,7 @@ stocksList = ['AAL','GNUS','NIO','UAL','DAL','GE','F','SAVE','NCLH','CCL','M',
                 'KEY','PE','PK','MAC','RF','SPR','SABR','SQ','FTI','X','JWN',
                 'TSLA','BLDP','PLUG','UBER','TRMB','YNDX','AAXN','MRCY','TDY','LMT',
                 'AJRD','LHX','MAXR','BWXT','LUV','SKYW','F','ALK','CIDM','AMTD',
-                'KZR','ATSG','WMG'
-                ]                  
+                'KZR','ATSG','WMG']                                  
 
 main_obj_list=[]
 cashAmount = 300000

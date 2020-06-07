@@ -1,9 +1,6 @@
-import requests
-import json
 import pandas as pd
 from alpaca_test import getAlpacaData
 import time
-import numpy as np
 
 twelveApi = '4138a26532c14163a10c81b40f323194'
 
@@ -49,7 +46,7 @@ class myStock:
                 if cross1 and cross2:
                     print('sma says to buy')
                     self._buyState = True
-                    
+
         except Exception as e:
             print(e)
             return
