@@ -1,5 +1,4 @@
 import pandas as pd
-from alpaca_test import getAlpacaData
 import time
 
 twelveApi = '4138a26532c14163a10c81b40f323194'
@@ -12,13 +11,13 @@ class myStock:
         self._ticker=ticker
         self._stockInterval = stockInt
         self._dayInv=50
-        self._weeklyInv=50
+        self._main_inv=50
         self.technical='sma'
         self._df_stock=pd.DataFrame()
         self._buyState = False
         self._sellState = False
         self._dayInvState = False
-        self._weeklyInvState = False
+        self._main_inv_state = False
         self._stopLoss = 0.00
         self._takeProfit = 0.00
         self._currentDate = ''
@@ -141,13 +140,13 @@ class myStock:
             print('need a bool fool')
 
     @property
-    def weeklyInvState(self):
-        return self._weeklyInvState
+    def main_inv_state(self):
+        return self._main_inv_state
 
-    @weeklyInvState.setter
-    def weeklyInvState(self,value):
+    @main_inv_state.setter
+    def main_inv_state(self,value):
         if type(value) == bool:
-            self._weeklyInvState=value
+            self._main_inv_state=value
         else:
             print('need a bool fool')
 
@@ -163,37 +162,15 @@ class myStock:
             print('need an int fool')
 
     @property
-    def weeklyInv(self):
-        return self._weeklyInv
+    def main_inv(self):
+        return self._main_inv
 
-    @weeklyInv.setter
-    def weeklyInv(self,value):
+    @main_inv.setter
+    def main_inv(self,value):
         if type(value) == int:
-            self._weeklyInv=value
+            self._main_inv=value
         else:
-            print('need an int fool')
-
-    @property
-    def stopLoss(self):
-        return self._stopLoss
-
-    @stopLoss.setter
-    def stopLoss(self,value):
-        if type(value) == float:
-            self._stopLoss=value
-        else:
-            print('need an float fool')
-
-    @property
-    def takeProfit(self):
-        return self._takeProfit
-
-    @takeProfit.setter
-    def takeProfit(self,value):
-        if type(value) == float:
-            self._takeProfit=value
-        else:
-            print('need an float fool')        
+            print('need an int fool')   
 
     @property
     def currentPrice(self):
@@ -201,7 +178,7 @@ class myStock:
 
     @currentPrice.setter
     def currentPrice(self,value):
-        self._currentPrice = 0
+        self._currentPrice = value
 
     @property
     def currentDate(self):

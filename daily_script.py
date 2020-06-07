@@ -1,7 +1,7 @@
 from mystock import myStock
 from alpaca_test import (place_second_order,place_main_order,
                         closePositions,marketHoursCheck,
-                        getPriceThree, sma_and_rsi_data,calc_macD)
+                        getPriceThree,sma_and_rsi_data,calc_macD)
 import time
 from schedule import is_time_between_int
 import pandas as pd
@@ -42,11 +42,11 @@ def stock_loop_one():
         obj.df_stock = df_all_data.loc[obj.ticker]
         print('now loading: {}'.format(obj.ticker))
 
-        if obj.weeklyInvState == True:
+        if obj.main_inv_state == True:
             print('Sell Check!')
             obj.smaDayTradeSell()
             #obj.simple_ema_sell()
-        elif obj.weeklyInvState == False:
+        elif obj.main_inv_state == False:
             print('Buy Check!')
             obj.smaDayTradeBuy()
             #obj.simple_ema_buy()
@@ -54,18 +54,18 @@ def stock_loop_one():
         if obj.buyState == True:
             print('Buying!')      
             currentPrice = getPriceThree(obj.ticker)       
-            obj.weeklyInv = int(cashAmount/(len(stocksList))/int(currentPrice))
-            place_main_order(obj.ticker,obj.weeklyInv,'buy')
-            place_second_order(obj.ticker,obj.weeklyInv,'buy')
+            obj.main_inv = cashAmount/(len(stocksList))/int(currentPrice)
+            place_main_order(obj.ticker,obj.main_inv,'buy')
+            place_second_order(obj.ticker,obj.main_inv,'buy')
             obj.buyState = False
-            obj.weeklyInvState = True
+            obj.main_inv_state = True
 
         if obj.sellState == True:
             print('Selling!') 
-            place_main_order(obj.ticker,obj.weeklyInv,'sell')
-            place_second_order(obj.ticker,obj.weeklyInv,'sell')
+            place_main_order(obj.ticker,obj.main_inv,'sell')
+            place_second_order(obj.ticker,obj.main_inv,'sell')
             obj.sellState = False
-            obj.weeklyInvState = False
+            obj.main_inv_state = False
         time.sleep(.33)
 
 
