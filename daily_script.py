@@ -1,7 +1,7 @@
 from mystock import myStock
-from alpaca_test import (placeDayOrder,placeWeeklyOrder,
+from alpaca_test import (place_second_order,place_main_order,
                         closePositions,marketHoursCheck,
-                        getPriceThree, getAlpacaDataLong,calc_macD)
+                        getPriceThree, sma_and_rsi_data,calc_macD)
 import time
 from schedule import is_time_between_int
 import pandas as pd
@@ -23,7 +23,7 @@ def get_data():
     myString=''
     for stock in stocksList:
         myString+=f'{stock},'
-    df_all_data = getAlpacaDataLong(myString)
+    df_all_data = sma_and_rsi_data(myString)
     #df_all_data=calc_macD(myString)
     return df_all_data
 
@@ -55,15 +55,15 @@ def stock_loop_one():
             print('Buying!')      
             currentPrice = getPriceThree(obj.ticker)       
             obj.weeklyInv = int(cashAmount/(len(stocksList))/int(currentPrice))
-            placeWeeklyOrder(obj.ticker,obj.weeklyInv,'buy')
-            placeDayOrder(obj.ticker,obj.weeklyInv,'buy')
+            place_main_order(obj.ticker,obj.weeklyInv,'buy')
+            place_second_order(obj.ticker,obj.weeklyInv,'buy')
             obj.buyState = False
             obj.weeklyInvState = True
 
         if obj.sellState == True:
             print('Selling!') 
-            placeWeeklyOrder(obj.ticker,obj.weeklyInv,'sell')
-            placeDayOrder(obj.ticker,obj.weeklyInv,'sell')
+            place_main_order(obj.ticker,obj.weeklyInv,'sell')
+            place_second_order(obj.ticker,obj.weeklyInv,'sell')
             obj.sellState = False
             obj.weeklyInvState = False
         time.sleep(.33)

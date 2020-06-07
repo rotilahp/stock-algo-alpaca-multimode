@@ -22,7 +22,7 @@ def get_last_trade(ticker):
     info = api_for_daniel.get_last_trade(ticker)
     return float(info.price)
 
-def placeDayOrder(ticker,inv, _side):
+def place_second_order(ticker,inv, _side):
     try:
         if _side == 'buy':
             current_price = get_last_trade(ticker)
@@ -74,7 +74,7 @@ def placeDayOrder(ticker,inv, _side):
         print('failed to place order')
         return
 
-def placeWeeklyOrder(ticker,inv, _side):
+def place_main_order(ticker,inv, _side):
     try:
         if _side == 'buy':
             current_price = get_last_trade(ticker)
@@ -155,96 +155,7 @@ def get_bid_price(ticker):
     bars = barset[ticker]['close']
     return float(bars)
 
-def getAlpacaData(ticker,interval='minute'):
-    try:
-        barset = api_for_mom.get_barset(ticker,interval,limit=35)
-        bars = barset[ticker]
-        barList = []
-        for index in range(35):
-            x=34-index
-            barList.append(bars[x].c)
-
-        df_new = pd.DataFrame()
-        df_new['close'] = barList
-        
-        valueList =[] 
-        for index, value in enumerate(df_new['close']):
-            if index < 11:
-                valueList.append(df_new['close'][index:3+index].mean())
-            else:
-                valueList.append('NaN')
-        df_new['sma1'] = valueList
-
-        valueList =[]
-        for index, value in enumerate(df_new['close']):
-            if index < 11:
-                valueList.append(df_new['close'][index:8+index].mean())
-            else:
-                valueList.append('NaN')
-        df_new['sma2'] = valueList
-
-        valueList =[]
-        for index, value in enumerate(df_new['close']):
-            if index < 11:
-                valueList.append(df_new['close'][index:21+index].mean())
-            else:
-                valueList.append('NaN')
-        df_new['sma3'] = valueList 
-
-        upList = []
-        downList = []
-        rsiPeriod = 14
-        for index, value in enumerate(df_new['close']):
-            if index <34:
-                change = df_new['close'][index]-df_new['close'][index+1]
-                if change > 0:
-                    upList.append(change)
-                    downList.append(0.00)
-                elif change < 0:
-                    downList.append(abs(change))
-                    upList.append(0.00)
-                else:
-                    upList.append(0.00)
-                    downList.append(0.00)
-            else:
-                upList.append('N/A')
-                downList.append('N/A')
-
-        df_new['up']=upList
-        df_new['down']=downList
-
-        avgU=[]
-        avgD=[]
-        for index, value in enumerate(df_new['close']):
-            if index <= len(df_new['close'])-15:
-                avgU.append(df_new['up'][index:(index+rsiPeriod)].mean())
-                avgD.append(df_new['down'][index:(index+rsiPeriod)].mean())
-            else:
-                avgU.append('NaN')
-                avgD.append('NaN')
-        
-        df_new['avgU']=avgU
-        df_new['avgD']=avgD
-
-        rs=[]
-        rsi=[]
-        for index, value in enumerate(df_new['close']):
-            if index <= rsiPeriod:
-                rs.append(df_new['avgU'][index]/df_new['avgD'][index])
-                rsi.append(100.0-100.0/(1.0+rs[index]))
-            else:
-                rs.append('NaN')
-                rsi.append('NaN')
-
-        df_new['rs']=rs
-        df_new['rsi']=rsi
-    except:
-        print('failed to pull data from alpaca')
-        
-    return df_new
-
-
-def getAlpacaDataLong(ticker,interval='minute'):
+def sma_and_rsi_data(ticker,interval='minute'):
     try:
         barset = api_for_daniel.get_barset(ticker,interval,limit=35)
         df_all = pd.DataFrame()
