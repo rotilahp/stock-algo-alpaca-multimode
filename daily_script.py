@@ -1,47 +1,32 @@
 from mystock import myStock
 from alpaca_test import (placeDayOrder,placeWeeklyOrder,dayInvStatus,
-                        dayInv,weeklyInvStatus,closePositions,weeklyInv,
-                        marketHoursCheck,getPriceThree, getAlpacaDataLong,
-                        calc_macD)
+                        closePositions,marketHoursCheck,
+                        getPriceThree, getAlpacaDataLong,calc_macD)
 import time
 from schedule import is_time_between_int
 import pandas as pd
           
-stocksList = [  'FSLY','ZS','ZM','WIX','TWLO','DOCU','DDOG','OKTA',               #cloud computing----------------------------
-                'CRWD','FIVN','NET','VEEV','QLYS',
-                'WDAY','PAYC','PCTY','PLAN','AKAM','CRM',                        #global x cloud etf
-                'TSLA','SQ','ROKU','TWOU','Z','SPLK','TREE','PINS',               #Ark Web ETF 
-                'EVBG','COUP','SHOP',                                             
-                'USAC','NS','CEQP','DKL','DCP','CAPL','WLKP','HESM',              #high income -------------------------------
-                'MMP','PAA','HEP','BPMP','EPD','WES','KNOP',
-                'FNGO',                                                           #FANG 2x leverage
-                'CRSP','ILMN','NVTA','CGEN','ARCT','NTLA',                        #biotech stocks--------------------------
-                'IOVA','EDIT','CLLS','CDNA','TWST','PRLB',                                
-                'REGN','EXEL','SRPT','SGEN','GMAB',                               #immunology and healthcare etf
-                'SFIX','W','GRUB','STMP','RVLV','TRIP','BABA',                    #online retail stocks------------------------------------
-                'EXPE','BKNG','REAL','FLWS','ETSY','EBAY','QRTEA',
-                'SSTK','CHWY','FLWS','GRPN','QUOT','MELI', 
-                'SE','ATVI','EA','NTES','ZNGA',                                   #video games 
-                'PCG','WEBL','VTIQ']                                              #regular shit
+stocksList = ['AAL','GNUS','NIO','UAL','DAL','GE','F','SAVE','NCLH','CCL','M',
+                'BA','WFC','JBLU','MGM','SIRI','WORK','LUV','OXY','ITUB','VALE',
+                'MU','RCL','C','PLUG','EWZ','EBAY','PLAY','TNA','SCHW','ZNGA',
+                'PENN','GPS','JETS','FCX','ZM','CLDR','SPG','AMTD','BBBY','NKLA','CRWD',
+                'KEY','PE','PK','MAC','RF','SPR','SABR','SQ','FTI','X','JWN',
+                'TSLA','BLDP','PLUG','UBER','TRMB','YNDX','AAXN','MRCY','TDY','LMT',
+                'AJRD','LHX','MAXR','BWXT','LUV','SKYW','F','ALK','CIDM','AMTD',
+                'KZR','ATSG','WMG'
+                ]                  
 weekList = stocksList
 objectList=[]
 weekObjList=[]
 cashAmount = 300000
 df_all_data = pd.DataFrame()
 
-def stopAndTakeCheck(obj):
-    currentPrice = getPriceThree(obj.ticker)
-    if currentPrice < obj.stopLoss:
-        obj.sellState = True
-    if currentPrice > obj.takeProfit:
-        obj.sellState = True
-
 def get_data():
     myString=''
     for stock in stocksList:
         myString+=f'{stock},'
-    #df_all_data = getAlpacaDataLong(myString)
-    df_all_data=calc_macD(myString)
+    df_all_data = getAlpacaDataLong(myString)
+    #df_all_data=calc_macD(myString)
     return df_all_data
 
 def setup():
@@ -92,30 +77,30 @@ def weeklyLoop():
 
         if obj.weeklyInvState == True:
             print('Sell Check!')
-            #stopAndTakeCheck(obj)
-            #obj.smaDayTradeSell()
-            obj.simple_ema_sell()
+            obj.smaDayTradeSell()
+            #obj.simple_ema_sell()
         elif obj.weeklyInvState == False:
             print('Buy Check!')
-            #obj.smaDayTradeBuy()
-            obj.simple_ema_buy()
+            obj.smaDayTradeBuy()
+            #obj.simple_ema_buy()
 
         if obj.buyState == True:
             print('Buying!')      
             currentPrice = getPriceThree(obj.ticker)       
             obj.weeklyInv = int(cashAmount/(len(weekList))/int(currentPrice))
-            #obj.stopLoss = currentPrice * 0.985
-            #obj.takeProfit = currentPrice * 1.03
             placeWeeklyOrder(obj.ticker,obj.weeklyInv,'buy')
+            placeDayOrder(obj.ticker,obj.weeklyInv,'buy')
             obj.buyState = False
             obj.weeklyInvState = True
 
         if obj.sellState == True:
             print('Selling!') 
             placeWeeklyOrder(obj.ticker,obj.weeklyInv,'sell')
+            placeDayOrder(obj.ticker,obj.weeklyInv,'sell')
             obj.sellState = False
             obj.weeklyInvState = False
         time.sleep(.33)
+
 
 marketLoop = True
 while marketLoop:

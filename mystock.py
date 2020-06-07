@@ -29,39 +29,31 @@ class myStock:
 
     def __dict__(self,item):
         self.item=item
-
-    def getData(self):
-        try:            
-            #self._df_stock = testData(self._ticker,self._stockInterval)
-            self._df_stock = getAlpacaData(self._ticker)
-        except:
-            print('data didnt load')
-            pass
-
+  
     def smaDayTradeBuy(self):
         try:
-            df_sma3_price = self._df_stock['sma1']
-            df_sma8_price = self._df_stock['sma2']
-            df_sma21_price = self._df_stock['sma3']
+            df_sma3_price = self._df_stock['sma3']
+            df_sma8_price = self._df_stock['sma8']
+            df_sma21_price = self._df_stock['sma21']
 
             #This is a check for recent crosses btwn sma3, sma8, sma21
             cross1 = False
             cross2 = False
-            for i, value in enumerate(df_sma3_price[0:8]):
+            for i, value in enumerate(df_sma3_price[0:6]):
                 if df_sma3_price[i] - df_sma8_price[i] < 0.0:
                     cross1 = True
                 if df_sma3_price[i] - df_sma21_price[i] < 0.0:
                     cross2 = True
 
-            print('cross1:{} cross2:{}'.format(cross1,cross2))
-            print('if {} > {} and {} > {}'.format(df_sma3_price[0],df_sma21_price[0],df_sma3_price[0],df_sma8_price[0]))
             if df_sma3_price[0] > df_sma21_price[0] and df_sma3_price[0] > df_sma8_price[0]:
                 if cross1 and cross2:
+                    print('sma says to buy')
                     self._buyState = True
-        except:
-            print('missing a list')
-            self.getData()
-            pass
+                    
+        except Exception as e:
+            print(e)
+            return
+
     def smaDayTradeSell(self):
         try:
             df_sma3_price = self._df_stock['sma1']  
@@ -70,42 +62,54 @@ class myStock:
             df_rsi_price=self._df_stock['rsi']
 
             if df_sma3_price[0] < df_sma21_price[0] or df_sma3_price[0] < df_sma8_price[0]:
-                print('sma says to sell')
-
                 if df_rsi_price[0] < float(50):
                     self._sellState = True
-                    print('rsi says to sell')
+                    print('sma and rsi says to sell')
  
-        except:
-            print('missing a list')
-            self.getData()
-            pass
+        except Exception as e:
+            print(e)
+            return
+
     def simple_ema_buy(self):
         try:
-            df_macD=self._df_stock['macD']
-            if df_macD[0] > 0:
-                print('ema says to buy')
-                self._buyState=True
-        except:
-            print('missing a list')
-            pass
+            df_ema3=self._df_stock['ema3']
+            df_ema12=self._df_stock['ema12']
+            df_ema21=self._df_stock['ema21']
+            
+            cross1 = False
+            cross2 = False
+            for i, value in enumerate(df_ema3[0:6]):
+                if df_ema3[i] - df_ema12[i] < 0.0:
+                    cross1 = True
+                if df_ema3[i] - df_ema21[i] < 0.0:
+                    cross2 = True
+
+            if df_ema3[0] > df_ema12[0] and df_ema3[0] > df_ema21[0]:
+                if cross1 and cross2:
+                    print('ema says to buy')
+                    self._buyState = True
+
+        except Exception as e:
+            print(e)
+            return
 
     def simple_ema_sell(self):
         try:
+            df_ema3=self._df_stock['ema3']
+            df_ema12=self._df_stock['ema12']
+            df_ema21=self._df_stock['ema21']
             df_macD=self._df_stock['macD']
             df_signal = self._df_stock['signal']
 
-            if df_macD[0] < 0 or df_signal[0]>df_macD[0] :
-                print('ema or signal says to sell')
-                self._sellState=True
+            if df_ema3[0] < df_ema12[0] or df_ema3[0] < df_ema21[0]:
+                if df_signal[0] > df_macD[0]:
+                    print('ema and macd say to sell')
+                    self._sellState=True
 
-            elif df_signal[0] > 0.2:
-                print('momentum says to hold on')
-                self._sellState=False
+        except Exception as e:
+            print(e)
+            return
 
-        except:
-            print('missing a list')
-            pass
     @property
     def buyState(self):
         return self._buyState
@@ -200,7 +204,7 @@ class myStock:
 
     @currentPrice.setter
     def currentPrice(self,value):
-        self._currentPrice = getPrice(self)
+        self._currentPrice = 0
 
     @property
     def currentDate(self):

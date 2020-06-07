@@ -1,76 +1,141 @@
-apiKey = 'PKXCR7JS2MLM2OX8OZQJ'
-secretKey = 'svwF29CXjP3l3TY8VLelx6KbPmTt08HnRFmG1JsB'
+apiKey = 'PKUEUNNM9IGYK7KPVC57'
+secretKey = '6sfPaWM8SiBc9JPLEcKvlvqXEcDmYTjP/YLl05k9'
 endpoint = 'https://paper-api.alpaca.markets'
 
 import alpaca_trade_api as tradeapi
 import pandas as pd
 import time
 
-api_day = tradeapi.REST(
+api_for_daniel = tradeapi.REST(
         apiKey,
         secretKey,
         endpoint
     )
-comment = '''
-api_weekly = tradeapi.REST(
-        'PKXCR7JS2MLM2OX8OZQJ',
-        'svwF29CXjP3l3TY8VLelx6KbPmTt08HnRFmG1JsB',
+
+api_for_mom = tradeapi.REST(
+        'PK2B9YFVI6LVO5YP12G3',
+        'h8aB36QHred2OgLiYp4Wn0EVz4BTCGwCxesmmWXe',
         endpoint
     )
-'''
-api_weekly = api_day
+
+def get_last_trade(ticker):
+    info = api_for_daniel.get_last_trade(ticker)
+    return float(info.price)
+
 def placeDayOrder(ticker,inv, _side):
     try:
-        final=(1000.00/float(inv))+getPriceThree(ticker)
-        loss=(-300.00/float(inv))+getPriceThree(ticker)
-        print(final)
-        api_day.submit_order(
-            symbol=ticker,
-            qty=inv,
-            side=_side,
-            type='market',
-            time_in_force='day',
-            #order_class='bracket',
-            #take_profit={'limit_price':final},
-            #stop_loss={'stop_price':loss}
-        )
-    except:
+        if _side == 'buy':
+            current_price = get_last_trade(ticker)
+            loss=current_price*.9995
+            api_for_mom.submit_order(
+                symbol=ticker,
+                qty=inv,
+                side=_side,
+                type='limit',
+                time_in_force='day',
+                limit_price=current_price*1.0005,
+                order_class='oto',
+                stop_loss={'stop_price':loss}
+            )
+            
+        elif _side == 'sell':
+            #check for positions
+            #check for orders
+            order = [o for o in api_for_mom.list_orders() if o.symbol == ticker]
+            position = [p for p in api_for_mom.list_positions()
+                        if p.symbol == ticker]
+
+            if position is not None:
+                if order is None:
+                    current_price = get_last_trade(ticker)
+                    order = api_for_mom.submit_order(
+                        symbol=ticker,
+                        qty=inv,
+                        side=_side,
+                        type='limit',
+                        time_in_force='day',
+                        limit_price=current_price*0.9995,
+                    )
+                else:
+                    #cancel sell order first
+                    api_for_mom.cancel_order(order[0].id)
+                    current_price = get_last_trade(ticker)
+                    api_for_mom.submit_order(
+                        symbol=ticker,
+                        qty=inv,
+                        side=_side,
+                        type='limit',
+                        time_in_force='day',
+                        limit_price=current_price*0.9995,
+                    )
+            
+    except Exception as e:
+        print(e)
         print('failed to place order')
-        pass
+        return
+
+
 
 def placeWeeklyOrder(ticker,inv, _side):
     try:
         if _side == 'buy':
-            #final=(1000.00/float(inv))+getPriceThree(ticker)
-            #loss=(-300.00/float(inv))+getPriceThree(ticker)
-            api_weekly.submit_order(
+            current_price = get_last_trade(ticker)
+            loss=current_price*.9995
+            api_for_daniel.submit_order(
                 symbol=ticker,
                 qty=inv,
                 side=_side,
-                type='market',
+                type='limit',
                 time_in_force='day',
-                #order_class='bracket',
-                #take_profit={'limit_price':final},
-                #stop_loss={'stop_price':loss}
+                limit_price=current_price*1.0005,
+                order_class='oto',
+                stop_loss={'stop_price':loss}
             )
-        elif _side == 'sell':
-            api_weekly.close_position(ticker)
             
-    except:
-        print('failed to place order')
-        #api_weekly.submit_order(
-        #        symbol=ticker,
-        #        qty=inv,
-        #        side=_side,
-        #        type='market',
-       #         time_in_force='gtc',
-        #    )
-        pass
+        elif _side == 'sell':
+            #check for positions
+            #check for orders
+            order = [o for o in api_for_daniel.list_orders() if o.symbol == ticker]
+            position = [p for p in api_for_daniel.list_positions()
+                        if p.symbol == ticker]
 
+            if position is not None:
+                if order is None:
+                    current_price = get_last_trade(ticker)
+                    order = api_for_daniel.submit_order(
+                        symbol=ticker,
+                        qty=inv,
+                        side=_side,
+                        type='limit',
+                        time_in_force='day',
+                        limit_price=current_price*0.9995,
+                    )
+                else:
+                    #cancel sell order first
+                    api_for_daniel.cancel_order(order[0].id)
+                    current_price = get_last_trade(ticker)
+                    api_for_daniel.submit_order(
+                        symbol=ticker,
+                        qty=inv,
+                        side=_side,
+                        type='limit',
+                        time_in_force='day',
+                        limit_price=current_price*0.9995,
+                    )
+            
+    except Exception as e:
+        print(e)
+        print('failed to place order')
+        return
+
+#placeWeeklyOrder('AMD',55,'buy')
+
+def orderUpdate():
+    return None
 
 def dayInvStatus(obj):
     try:
-        position = api_day.get_position(obj.ticker)
+        position = api_for_mom.get_position(obj.ticker)
         return True
     except:
         #return False
@@ -78,7 +143,7 @@ def dayInvStatus(obj):
 
 def dayInv(obj):
     try:
-        position = api_day.get_position(obj.ticker)
+        position = api_for_mom.get_position(obj.ticker)
         return position
     except:
         print('no inventory')
@@ -86,32 +151,46 @@ def dayInv(obj):
 
 def weeklyInvStatus(obj):
     try:
-        position = api_weekly.get_position(obj.ticker)
+        position = api_for_daniel.get_position(obj.ticker)
         return True
     except:
         #return False
         return False
 
-def weeklyInv(obj):
+def get_position(obj):
     try:
-        position = api_weekly.get_position(obj.ticker)
+        position = api_for_daniel.get_position(obj.ticker)
         return position
     except:
         print('no inventory')
-        return 50
+        return 0
 
 def marketHoursCheck():
-    clock = api_day.get_clock()
+    clock = api_for_daniel.get_clock()
     return True if clock.is_open else False
 
 def getPriceThree(ticker):
-    barset = api_weekly.get_barset(ticker,'minute',limit=1).df.iloc[0]
+    barset = api_for_daniel.get_barset(ticker,'minute',limit=1).df.iloc[0]
+    bars = barset[ticker]['close']
+    return float(bars)
+
+
+
+#print(get_last_trade('AMD'))
+
+def get_ask_price(ticker):
+    barset = api_for_daniel.get_barset(ticker,'minute',limit=1).df.iloc[0]
+    bars = barset[ticker]['close']
+    return float(bars)
+
+def get_bid_price(ticker):
+    barset = api_for_daniel.get_barset(ticker,'minute',limit=1).df.iloc[0]
     bars = barset[ticker]['close']
     return float(bars)
 
 def getAlpacaData(ticker,interval='minute'):
     try:
-        barset = api_weekly.get_barset(ticker,interval,limit=35)
+        barset = api_for_mom.get_barset(ticker,interval,limit=35)
         bars = barset[ticker]
         barList = []
         for index in range(35):
@@ -200,7 +279,7 @@ def getAlpacaData(ticker,interval='minute'):
 
 def getAlpacaDataLong(ticker,interval='minute'):
     try:
-        barset = api_weekly.get_barset(ticker,interval,limit=35)
+        barset = api_for_daniel.get_barset(ticker,interval,limit=35)
         df_all = pd.DataFrame()
         infoList=[]
         keyList=[]
@@ -222,7 +301,7 @@ def getAlpacaDataLong(ticker,interval='minute'):
                     valueList.append(df_new['close'][index:3+index].mean())
                 else:
                     valueList.append('NaN')
-            df_new['sma1'] = valueList
+            df_new['sma3'] = valueList
 
             valueList =[]
             for index, value in enumerate(df_new['close']):
@@ -230,7 +309,7 @@ def getAlpacaDataLong(ticker,interval='minute'):
                     valueList.append(df_new['close'][index:8+index].mean())
                 else:
                     valueList.append('NaN')
-            df_new['sma2'] = valueList
+            df_new['sma8'] = valueList
 
             valueList =[]
             for index, value in enumerate(df_new['close']):
@@ -238,7 +317,7 @@ def getAlpacaDataLong(ticker,interval='minute'):
                     valueList.append(df_new['close'][index:21+index].mean())
                 else:
                     valueList.append('NaN')
-            df_new['sma3'] = valueList 
+            df_new['sma21'] = valueList 
 
             upList = []
             downList = []
@@ -295,7 +374,7 @@ def getAlpacaDataLong(ticker,interval='minute'):
         print('failed to pull data from alpaca')
 
 def calc_macD(ticker,interval='minute'):
-    barset = api_weekly.get_barset(ticker,interval,limit=55)
+    barset = api_for_daniel.get_barset(ticker,interval,limit=55)
     df_all = pd.DataFrame()
     infoList=[]
     keyList=[]
@@ -303,114 +382,126 @@ def calc_macD(ticker,interval='minute'):
     for bar in barset:
         bars=barset[bar]
 
-        barList = []
-        for index in range(55):
-            x=54-index
-            barList.append(bars[x].c)
+        #closing in ascending order
+        closing_list=[]
+        for i in range(55):
+            closing_list.append(bars[i].c)
+        closing=pd.Series(closing_list)
 
-        df_new = pd.DataFrame()
-        df_new['close'] = barList
+        #ema3 in ascending order
+        span=3
+        sma=closing.rolling(window=span,min_periods=span).mean()[:span]
+        rest=closing[span:]
+        ema3 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        valueList =[] 
-        for index, value in enumerate(df_new['close']):
-            if index < 11:
-                valueList.append(df_new['close'][index:3+index].mean())
-            else:
-                valueList.append('NaN')
-        df_new['sma1'] = valueList
+        #ema12 in ascending order
+        span=12
+        sma=closing.rolling(window=span,min_periods=span).mean()[:span]
+        rest=closing[span:]
+        ema12 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        valueList =[]
-        for index, value in enumerate(df_new['close']):
-            if index < 11:
-                valueList.append(df_new['close'][index:8+index].mean())
-            else:
-                valueList.append('NaN')
-        df_new['sma2'] = valueList
+        #ema21 in ascending order
+        span=21
+        sma=closing.rolling(window=span,min_periods=span).mean()[:span]
+        rest=closing[span:]
+        ema21 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        valueList =[]
-        for index, value in enumerate(df_new['close']):
-            if index < 11:
-                valueList.append(df_new['close'][index:21+index].mean())
-            else:
-                valueList.append('NaN')
-        df_new['sma3'] = valueList
+        #ema26 in ascending order
+        span=26
+        sma=closing.rolling(window=span,min_periods=span).mean()[:span]
+        rest=closing[span:]
+        ema26 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        ema12 = []
-        for index in range(55):
-            if index < 54-12:
-                ema12.append(df_new['close'][index:index+13].mean())
-            else:
-                ema12.append('NaN')
-              
-        df_new['ema12']=ema12
+        #macD in ascending order
+        macD_list=[]
+        for i in range(55):
+            macD_list.append(ema12[i]-ema26[i])
+        macD=pd.Series(macD_list)
 
-        ema26=[]
-        for index in range(55):
-            if index < 54-26:
-                ema26.append(df_new['close'][index:index+27].mean())
-            else:
-                ema26.append('NaN')
-              
-        df_new['ema26']=ema26
-        a=2/13
-        for index in range(55):
-            x=54-index
-            if x < 13:
-                df_new.loc[x,'ema12'] = (float(df_new['close'][x])-float(df_new['ema12'][x+1]))*a+float(df_new['ema12'][x+1])
-        a=2/27
-        for index in range(55):
-            x=54-index
-            if x < 27:
-                df_new.loc[x,'ema26'] = (float(df_new['close'][x])-float(df_new['ema26'][x+1]))*a+float(df_new['ema26'][x+1])
+        #signal in ascending order
+        span=9
+        sma=macD.rolling(window=span,min_periods=span).mean()[:span]
+        rest=macD[span:]
+        signal = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        macDList=[]
-        for index in range(55):
-            macDList.append(float(df_new['ema12'][index])-float(df_new['ema26'][index]))
+        #closing in descending order
+        close_list=[]
+        for i in range(55):
+            x=54-i
+            close_list.append(closing[x])
+        df_closing=pd.Series(close_list)
+
+        #macD in descending order
+        macD_list=[]
+        for i in range(55):
+            x=54-i
+            macD_list.append(macD[x])
+        df_macD=pd.Series(macD_list)
+
+        #signal in descending order
+        signal_list=[]
+        for i in range(55):
+            x=54-i
+            signal_list.append(signal[x])
+        df_signal=pd.Series(signal_list)
+
+        #ema in descending order
+        revEma=[]
+        for i in range(55):
+            x=54-i
+            revEma.append(ema3[x])
+        df_ema3=pd.Series(revEma)
+
+        #ema in descending order
+        revEma=[]
+        for i in range(55):
+            x=54-i
+            revEma.append(ema12[x])
+        df_ema12=pd.Series(revEma)
+
+        #ema in descending order
+        revEma=[]
+        for i in range(55):
+            x=54-i
+            revEma.append(ema21[x])
+        df_ema21=pd.Series(revEma)
+
+        comment='''
+        #ema in descending order
+        revEma=[]
+        for i in range(55):
+            x=54-i
+            revEma.append(ema26[x])
+        df_ema26=pd.Series(revEma)
+        '''
         
-        df_new['macD'] = macDList
-
-
-        signalList = []
-        for index in range(55):
-            if index < 54-9:
-                signalList.append(df_new['macD'][index:index+9].mean())
-            else:
-                signalList.append('NaN')
-              
-        df_new['signal']=signalList
-
-        a=2/10
-        for index in range(55):
-            x=54-index
-            if x < 10:
-                df_new.loc[x,'signal'] = (float(df_new['macD'][x])-float(df_new['signal'][x+1]))*a+float(df_new['signal'][x+1])
-
-        infoList.append(df_new)
+        df_stock=pd.DataFrame({'close':df_closing,'ema3':df_ema3,'ema12':df_ema12,
+                                'ema21':df_ema21,'macD':df_macD,'signal':df_signal})
+        infoList.append(df_stock)
         keyList.append(bar)
     df_all=pd.concat(infoList,keys=keyList, axis=0)
     return df_all
 
-#print(calc_macD('AAPL,AMD,TSLA','minute'))
-
 def closePositions():
     try:
-        api_day.close_all_positions()
-        api_day.cancel_all_orders()
-        api_weekly.close_all_positions()
-        api_weekly.cancel_all_orders()
-    except:
+        api_for_mom.cancel_all_orders()
+        api_for_daniel.cancel_all_orders()
+        api_for_mom.close_all_positions()
+        api_for_daniel.close_all_positions()
+    except Exception as e:
+        print(e)
         print('no positions to close or error')
+        return
 
 def check_assets(mylist):
     for item in mylist:
-        asset = api_weekly.get_asset(item)
+        asset = api_for_daniel.get_asset(item)
         if not asset.tradable:
             print(f'{item} is not covered!')
             mylist.remove(item)
     return mylist
 
-
-
-
-
+def _cancel_order(_order):
+    if _order is not None:
+            api_for_daniel.cancel_order(_order.id)
 
