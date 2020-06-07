@@ -126,35 +126,6 @@ def placeWeeklyOrder(ticker,inv, _side):
         print('failed to place order')
         return
 
-#placeWeeklyOrder('AMD',55,'buy')
-
-def orderUpdate():
-    return None
-
-def dayInvStatus(obj):
-    try:
-        position = api_for_mom.get_position(obj.ticker)
-        return True
-    except Exception as e:
-        print(e)
-        return False
-
-def dayInv(obj):
-    try:
-        position = api_for_mom.get_position(obj.ticker)
-        return position
-    except Exception as e:
-        print(e)
-        return 50
-
-def weeklyInvStatus(obj):
-    try:
-        position = api_for_daniel.get_position(obj.ticker)
-        return True
-    except Exception as e:
-        print(e)
-        return False
-
 def get_position(obj):
     try:
         position = api_for_daniel.get_position(obj.ticker)
@@ -479,6 +450,7 @@ def calc_macD(ticker,interval='minute'):
             keyList.append(bar)
         df_all=pd.concat(infoList,keys=keyList, axis=0)
         return df_all
+
     except Exception as e:
         print(e)
         return
