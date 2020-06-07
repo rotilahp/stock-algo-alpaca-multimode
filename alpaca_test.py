@@ -74,8 +74,6 @@ def placeDayOrder(ticker,inv, _side):
         print('failed to place order')
         return
 
-
-
 def placeWeeklyOrder(ticker,inv, _side):
     try:
         if _side == 'buy':
@@ -137,33 +135,33 @@ def dayInvStatus(obj):
     try:
         position = api_for_mom.get_position(obj.ticker)
         return True
-    except:
-        #return False
+    except Exception as e:
+        print(e)
         return False
 
 def dayInv(obj):
     try:
         position = api_for_mom.get_position(obj.ticker)
         return position
-    except:
-        print('no inventory')
+    except Exception as e:
+        print(e)
         return 50
 
 def weeklyInvStatus(obj):
     try:
         position = api_for_daniel.get_position(obj.ticker)
         return True
-    except:
-        #return False
+    except Exception as e:
+        print(e)
         return False
 
 def get_position(obj):
     try:
         position = api_for_daniel.get_position(obj.ticker)
         return position
-    except:
-        print('no inventory')
-        return 0
+    except Exception as e:
+        print(e)
+        return
 
 def marketHoursCheck():
     clock = api_for_daniel.get_clock()
@@ -173,8 +171,6 @@ def getPriceThree(ticker):
     barset = api_for_daniel.get_barset(ticker,'minute',limit=1).df.iloc[0]
     bars = barset[ticker]['close']
     return float(bars)
-
-
 
 #print(get_last_trade('AMD'))
 
@@ -486,7 +482,7 @@ def calc_macD(ticker,interval='minute'):
     except Exception as e:
         print(e)
         return
-        
+
 def closePositions():
     try:
         api_for_mom.cancel_all_orders()

@@ -1,5 +1,5 @@
 from mystock import myStock
-from alpaca_test import (placeDayOrder,placeWeeklyOrder,dayInvStatus,
+from alpaca_test import (placeDayOrder,placeWeeklyOrder,
                         closePositions,marketHoursCheck,
                         getPriceThree, getAlpacaDataLong,calc_macD)
 import time
@@ -15,9 +15,8 @@ stocksList = ['AAL','GNUS','NIO','UAL','DAL','GE','F','SAVE','NCLH','CCL','M',
                 'AJRD','LHX','MAXR','BWXT','LUV','SKYW','F','ALK','CIDM','AMTD',
                 'KZR','ATSG','WMG'
                 ]                  
-weekList = stocksList
-objectList=[]
-weekObjList=[]
+
+main_obj_list=[]
 cashAmount = 300000
 df_all_data = pd.DataFrame()
 
@@ -32,45 +31,14 @@ def get_data():
 def setup():
     #CREATE STOCK OBJECTS
     for stock in stocksList:
-        objectList.append(myStock(stock))
-
-    for stock in weekList:
-        weekObjList.append(myStock(stock))
+        main_obj_list.append(myStock(stock))
 
     closePositions()   
-    weeklyLoop()
+    stock_loop_one()
 
-def dayLoop():
-    for obj in objectList:
-        obj.stockInterval = '5min'
-        obj.getData()
-        print('now loading: {}'.format(obj.ticker))
-
-        if obj.dayInvState == True:
-            print('Sell Check!')
-            obj.smaDayTradeSell()
-        elif obj.dayInvState == False:
-            print('Buy Check!')
-            obj.smaDayTradeBuy()
-
-        if obj.buyState == True:
-            print('Buying!') 
-            currentPrice = getPriceThree(obj.ticker)       
-            obj.dayInv = int(cashAmount/(len(weekList))/int(currentPrice))
-            placeDayOrder(obj.ticker,obj.dayInv,'buy')
-            obj.buyState = False
-            obj.dayInvState = True
-
-        if obj.sellState == True:
-            print('Selling!') 
-            placeDayOrder(obj.ticker,obj.dayInv,'sell')
-            obj.sellState = False
-            obj.dayInvState = False
-        time.sleep(1)
-
-def weeklyLoop():
+def stock_loop_one():
     df_all_data = get_data()
-    for obj in weekObjList:
+    for obj in main_obj_list:
         obj.stockInterval = 'minute'
         obj.df_stock = df_all_data.loc[obj.ticker]
         print('now loading: {}'.format(obj.ticker))
@@ -87,7 +55,7 @@ def weeklyLoop():
         if obj.buyState == True:
             print('Buying!')      
             currentPrice = getPriceThree(obj.ticker)       
-            obj.weeklyInv = int(cashAmount/(len(weekList))/int(currentPrice))
+            obj.weeklyInv = int(cashAmount/(len(stocksList))/int(currentPrice))
             placeWeeklyOrder(obj.ticker,obj.weeklyInv,'buy')
             placeDayOrder(obj.ticker,obj.weeklyInv,'buy')
             obj.buyState = False
@@ -117,7 +85,7 @@ while flag:
     current_sec = time.time()
     if current_sec-previous_sec > 60:
         previous_sec=time.time()
-        weeklyLoop()
+        stock_loop_one()
     if is_time_between_int(12,58,13,00):
         closePositions()
         time.sleep(1)
