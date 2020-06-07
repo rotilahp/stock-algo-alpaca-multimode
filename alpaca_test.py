@@ -370,118 +370,123 @@ def getAlpacaDataLong(ticker,interval='minute'):
             keyList.append(bar)
         df_all = pd.concat(infoList,keys=keyList, axis=0)
         return df_all
-    except:
-        print('failed to pull data from alpaca')
+    except Exception as e:
+        print(e)
+        return
 
 def calc_macD(ticker,interval='minute'):
-    barset = api_for_daniel.get_barset(ticker,interval,limit=55)
-    df_all = pd.DataFrame()
-    infoList=[]
-    keyList=[]
+    try:
+        barset = api_for_daniel.get_barset(ticker,interval,limit=55)
+        df_all = pd.DataFrame()
+        infoList=[]
+        keyList=[]
 
-    for bar in barset:
-        bars=barset[bar]
+        for bar in barset:
+            bars=barset[bar]
 
-        #closing in ascending order
-        closing_list=[]
-        for i in range(55):
-            closing_list.append(bars[i].c)
-        closing=pd.Series(closing_list)
+            #closing in ascending order
+            closing_list=[]
+            for i in range(55):
+                closing_list.append(bars[i].c)
+            closing=pd.Series(closing_list)
 
-        #ema3 in ascending order
-        span=3
-        sma=closing.rolling(window=span,min_periods=span).mean()[:span]
-        rest=closing[span:]
-        ema3 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
+            #ema3 in ascending order
+            span=3
+            sma=closing.rolling(window=span,min_periods=span).mean()[:span]
+            rest=closing[span:]
+            ema3 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        #ema12 in ascending order
-        span=12
-        sma=closing.rolling(window=span,min_periods=span).mean()[:span]
-        rest=closing[span:]
-        ema12 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
+            #ema12 in ascending order
+            span=12
+            sma=closing.rolling(window=span,min_periods=span).mean()[:span]
+            rest=closing[span:]
+            ema12 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        #ema21 in ascending order
-        span=21
-        sma=closing.rolling(window=span,min_periods=span).mean()[:span]
-        rest=closing[span:]
-        ema21 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
+            #ema21 in ascending order
+            span=21
+            sma=closing.rolling(window=span,min_periods=span).mean()[:span]
+            rest=closing[span:]
+            ema21 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        #ema26 in ascending order
-        span=26
-        sma=closing.rolling(window=span,min_periods=span).mean()[:span]
-        rest=closing[span:]
-        ema26 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
+            #ema26 in ascending order
+            span=26
+            sma=closing.rolling(window=span,min_periods=span).mean()[:span]
+            rest=closing[span:]
+            ema26 = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        #macD in ascending order
-        macD_list=[]
-        for i in range(55):
-            macD_list.append(ema12[i]-ema26[i])
-        macD=pd.Series(macD_list)
+            #macD in ascending order
+            macD_list=[]
+            for i in range(55):
+                macD_list.append(ema12[i]-ema26[i])
+            macD=pd.Series(macD_list)
 
-        #signal in ascending order
-        span=9
-        sma=macD.rolling(window=span,min_periods=span).mean()[:span]
-        rest=macD[span:]
-        signal = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
+            #signal in ascending order
+            span=9
+            sma=macD.rolling(window=span,min_periods=span).mean()[:span]
+            rest=macD[span:]
+            signal = pd.concat([sma,rest]).ewm(span=span,adjust=False).mean()
 
-        #closing in descending order
-        close_list=[]
-        for i in range(55):
-            x=54-i
-            close_list.append(closing[x])
-        df_closing=pd.Series(close_list)
+            #closing in descending order
+            close_list=[]
+            for i in range(55):
+                x=54-i
+                close_list.append(closing[x])
+            df_closing=pd.Series(close_list)
 
-        #macD in descending order
-        macD_list=[]
-        for i in range(55):
-            x=54-i
-            macD_list.append(macD[x])
-        df_macD=pd.Series(macD_list)
+            #macD in descending order
+            macD_list=[]
+            for i in range(55):
+                x=54-i
+                macD_list.append(macD[x])
+            df_macD=pd.Series(macD_list)
 
-        #signal in descending order
-        signal_list=[]
-        for i in range(55):
-            x=54-i
-            signal_list.append(signal[x])
-        df_signal=pd.Series(signal_list)
+            #signal in descending order
+            signal_list=[]
+            for i in range(55):
+                x=54-i
+                signal_list.append(signal[x])
+            df_signal=pd.Series(signal_list)
 
-        #ema in descending order
-        revEma=[]
-        for i in range(55):
-            x=54-i
-            revEma.append(ema3[x])
-        df_ema3=pd.Series(revEma)
+            #ema in descending order
+            revEma=[]
+            for i in range(55):
+                x=54-i
+                revEma.append(ema3[x])
+            df_ema3=pd.Series(revEma)
 
-        #ema in descending order
-        revEma=[]
-        for i in range(55):
-            x=54-i
-            revEma.append(ema12[x])
-        df_ema12=pd.Series(revEma)
+            #ema in descending order
+            revEma=[]
+            for i in range(55):
+                x=54-i
+                revEma.append(ema12[x])
+            df_ema12=pd.Series(revEma)
 
-        #ema in descending order
-        revEma=[]
-        for i in range(55):
-            x=54-i
-            revEma.append(ema21[x])
-        df_ema21=pd.Series(revEma)
+            #ema in descending order
+            revEma=[]
+            for i in range(55):
+                x=54-i
+                revEma.append(ema21[x])
+            df_ema21=pd.Series(revEma)
 
-        comment='''
-        #ema in descending order
-        revEma=[]
-        for i in range(55):
-            x=54-i
-            revEma.append(ema26[x])
-        df_ema26=pd.Series(revEma)
-        '''
+            comment='''
+            #ema in descending order
+            revEma=[]
+            for i in range(55):
+                x=54-i
+                revEma.append(ema26[x])
+            df_ema26=pd.Series(revEma)
+            '''
+            
+            df_stock=pd.DataFrame({'close':df_closing,'ema3':df_ema3,'ema12':df_ema12,
+                                    'ema21':df_ema21,'macD':df_macD,'signal':df_signal})
+            infoList.append(df_stock)
+            keyList.append(bar)
+        df_all=pd.concat(infoList,keys=keyList, axis=0)
+        return df_all
+    except Exception as e:
+        print(e)
+        return
         
-        df_stock=pd.DataFrame({'close':df_closing,'ema3':df_ema3,'ema12':df_ema12,
-                                'ema21':df_ema21,'macD':df_macD,'signal':df_signal})
-        infoList.append(df_stock)
-        keyList.append(bar)
-    df_all=pd.concat(infoList,keys=keyList, axis=0)
-    return df_all
-
 def closePositions():
     try:
         api_for_mom.cancel_all_orders()
@@ -490,7 +495,6 @@ def closePositions():
         api_for_daniel.close_all_positions()
     except Exception as e:
         print(e)
-        print('no positions to close or error')
         return
 
 def check_assets(mylist):
