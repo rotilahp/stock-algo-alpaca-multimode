@@ -15,7 +15,9 @@ stocksList = ['AAL','GNUS','NIO','UAL','DAL','GE','F','SAVE','NCLH','CCL','M',
                 'KEY','PE','PK','MAC','RF','SPR','SABR','SQ','FTI','X','JWN',
                 'TSLA','BLDP','PLUG','UBER','TRMB','YNDX','AAXN','MRCY','TDY','LMT',
                 'AJRD','LHX','MAXR','BWXT','SKYW','F','ALK','CIDM','AMTD',
-                'KZR','ATSG','WMG','IVR']                                  
+                'KZR','ATSG','WMG','IVR']  
+
+#Use these when its a crazy bear volatility kinda day!                                
 stocksList=['TVIX','UVXY','TZA','SPXS','SCO','FAZ','DRIP']
 
 

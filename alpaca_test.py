@@ -177,10 +177,10 @@ def update_order_for_mom(obj):
                     inv_difference = inv - int(order[0].filled_qty)
                     obj.main_inv=inv_difference
                     api_for_mom.cancel_order(order[0].id)
-                    place_main_order(obj,get_last_trade(symbol),_side)
+                    place_second_order(obj,get_last_trade(symbol),_side)
                 elif order[0].status == 'new':
                     api_for_mom.cancel_order(order[0].id)
-                    place_main_order(obj,get_last_trade(symbol),_side)
+                    place_second_order(obj,get_last_trade(symbol),_side)
                 else:
                     obj.limit_check_for_mom = False
         else:
