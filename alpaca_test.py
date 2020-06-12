@@ -5,6 +5,7 @@ endpoint = 'https://paper-api.alpaca.markets'
 import alpaca_trade_api as tradeapi
 import pandas as pd
 import time
+from mystock import myStock
 
 api_for_daniel = tradeapi.REST(
         apiKey,
@@ -22,11 +23,13 @@ def get_last_trade(ticker):
     info = api_for_daniel.get_last_trade(ticker)
     return float(info.price)
 
-def place_second_order(ticker,inv, _side):
+def place_second_order(obj,current_price, _side):
     try:
+        ticker = obj.ticker
+        inv=obj.main_inv
+
         if _side == 'buy':
-            current_price = get_last_trade(ticker)
-            loss=current_price*.9995
+            loss=current_price*.999
             api_for_mom.submit_order(
                 symbol=ticker,
                 qty=inv,
@@ -37,6 +40,7 @@ def place_second_order(ticker,inv, _side):
                 order_class='oto',
                 stop_loss={'stop_price':loss}
             )
+          
             
         elif _side == 'sell':
             #check for positions
@@ -45,40 +49,41 @@ def place_second_order(ticker,inv, _side):
             position = [p for p in api_for_mom.list_positions()
                         if p.symbol == ticker]
 
-            if position is not None:
-                if order is None:
-                    current_price = get_last_trade(ticker)
-                    order = api_for_mom.submit_order(
-                        symbol=ticker,
-                        qty=inv,
-                        side=_side,
-                        type='limit',
-                        time_in_force='day',
-                        limit_price=current_price*0.9995,
-                    )
-                else:
-                    #cancel sell order first
-                    api_for_mom.cancel_order(order[0].id)
-                    current_price = get_last_trade(ticker)
+            if position:
+                if not order:
                     api_for_mom.submit_order(
                         symbol=ticker,
                         qty=inv,
                         side=_side,
                         type='limit',
                         time_in_force='day',
-                        limit_price=current_price*0.9995,
+                        limit_price=current_price*0.999,
                     )
-            
+                    
+                else:
+                    #cancel sell order first
+                    api_for_mom.cancel_order(order[0].id)
+                    api_for_mom.submit_order(
+                        symbol=ticker,
+                        qty=inv,
+                        side=_side,
+                        type='limit',
+                        time_in_force='day',
+                        limit_price=current_price*0.999,
+                    )
+                               
     except Exception as e:
         print(e)
         print('failed to place order')
         return
 
-def place_main_order(ticker,inv, _side):
+def place_main_order(obj,current_price, _side):
     try:
+        ticker = obj.ticker
+        inv=obj.main_inv
+        
         if _side == 'buy':
-            current_price = get_last_trade(ticker)
-            loss=current_price*.9995
+            loss=current_price*.995
             api_for_daniel.submit_order(
                 symbol=ticker,
                 qty=inv,
@@ -89,7 +94,7 @@ def place_main_order(ticker,inv, _side):
                 order_class='oto',
                 stop_loss={'stop_price':loss}
             )
-            
+                      
         elif _side == 'sell':
             #check for positions
             #check for orders
@@ -97,39 +102,93 @@ def place_main_order(ticker,inv, _side):
             position = [p for p in api_for_daniel.list_positions()
                         if p.symbol == ticker]
 
-            if position is not None:
-                if order is None:
-                    current_price = get_last_trade(ticker)
-                    order = api_for_daniel.submit_order(
-                        symbol=ticker,
-                        qty=inv,
-                        side=_side,
-                        type='limit',
-                        time_in_force='day',
-                        limit_price=current_price*0.9995,
-                    )
-                else:
-                    #cancel sell order first
-                    api_for_daniel.cancel_order(order[0].id)
-                    current_price = get_last_trade(ticker)
+            if position:
+                if not order:
                     api_for_daniel.submit_order(
                         symbol=ticker,
                         qty=inv,
                         side=_side,
                         type='limit',
                         time_in_force='day',
-                        limit_price=current_price*0.9995,
+                        limit_price=current_price*0.999,
                     )
-            
+                else:
+                    #cancel sell order first
+                    api_for_daniel.cancel_order(order[0].id)
+                    api_for_daniel.submit_order(
+                        symbol=ticker,
+                        qty=inv,
+                        side=_side,
+                        type='limit',
+                        time_in_force='day',
+                        limit_price=current_price*0.999,
+                    )
+  
     except Exception as e:
         print(e)
         print('failed to place order')
         return
 
-def get_position(obj):
+def update_order(obj):
     try:
-        position = api_for_daniel.get_position(obj.ticker)
-        return position
+        symbol = obj.ticker
+        inv = obj.main_inv
+        _side = obj.limit_side   
+
+        order = [o for o in api_for_daniel.list_orders() if o.symbol == symbol]
+        position = [p for p in api_for_daniel.list_positions() 
+                                                        if p.symbol == symbol]
+
+        if position:
+            if order:
+                if order[0].status == 'partially_filled':
+                    inv_difference = inv - int(order[0].filled_qty)
+                    obj.main_inv=inv_difference
+                    api_for_daniel.cancel_order(order[0].id)
+                    place_main_order(obj,get_last_trade(symbol),_side)
+                elif order[0].status == 'new':
+                    api_for_daniel.cancel_order(order[0].id)
+                    place_main_order(obj,get_last_trade(symbol),_side)
+                else:
+                    obj.limit_check = False
+        else:
+            #stop loss sold it already
+            obj.limit_check=False
+            obj.main_inv_state = False
+            
+             
+    except Exception as e:
+        print(e)
+        return
+
+def update_order_for_mom(obj):
+    try:
+        symbol = obj.ticker
+        inv = obj.main_inv
+        _side = obj.limit_side   
+
+        order = [o for o in api_for_mom.list_orders() if o.symbol == symbol]
+        position = [p for p in api_for_mom.list_positions() 
+                                                        if p.symbol == symbol]
+
+        if position:
+            if order:
+                if order[0].status == 'partially_filled':
+                    inv_difference = inv - int(order[0].filled_qty)
+                    obj.main_inv=inv_difference
+                    api_for_mom.cancel_order(order[0].id)
+                    place_main_order(obj,get_last_trade(symbol),_side)
+                elif order[0].status == 'new':
+                    api_for_mom.cancel_order(order[0].id)
+                    place_main_order(obj,get_last_trade(symbol),_side)
+                else:
+                    obj.limit_check_for_mom = False
+        else:
+            #stop loss sold it already
+            obj.limit_check_for_mom=False
+            obj.main_inv_state = False
+            
+             
     except Exception as e:
         print(e)
         return
@@ -384,7 +443,4 @@ def check_assets(mylist):
             mylist.remove(item)
     return mylist
 
-def _cancel_order(_order):
-    if _order is not None:
-            api_for_daniel.cancel_order(_order.id)
 

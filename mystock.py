@@ -22,6 +22,9 @@ class myStock:
         self._takeProfit = 0.00
         self._currentDate = ''
         self._currentPrice = 0
+        self._limit_check=False
+        self._limit_side='sell'
+        self._limit_check_for_mom=False
 
     def __dict__(self,item):
         self.item=item
@@ -52,9 +55,9 @@ class myStock:
 
     def smaDayTradeSell(self):
         try:
-            df_sma3_price = self._df_stock['sma1']  
-            df_sma8_price = self._df_stock['sma2']
-            df_sma21_price=self._df_stock['sma3']  
+            df_sma3_price = self._df_stock['sma3']  
+            df_sma8_price = self._df_stock['sma8']
+            df_sma21_price=self._df_stock['sma21']  
             df_rsi_price=self._df_stock['rsi']
 
             if df_sma3_price[0] < df_sma21_price[0] or df_sma3_price[0] < df_sma8_price[0]:
@@ -151,6 +154,28 @@ class myStock:
             print('need a bool fool')
 
     @property
+    def limit_check(self):
+        return self._limit_check
+
+    @limit_check.setter
+    def limit_check(self,value):
+        if type(value) == bool:
+            self._limit_check=value
+        else:
+            print('need a bool fool')
+
+    @property
+    def limit_check_for_mom(self):
+        return self._limit_check_for_mom
+
+    @limit_check_for_mom.setter
+    def limit_check_for_mom(self,value):
+        if type(value) == bool:
+            self._limit_check_for_mom=value
+        else:
+            print('need a bool fool')
+
+    @property
     def dayInv(self):
         return self._dayInv
 
@@ -191,6 +216,14 @@ class myStock:
     @weeklyCounter.setter
     def weeklyCounter(self,value):
         self._weeklyCounter = value
+
+    @property
+    def limit_side(self):
+        return self._limit_side
+
+    @limit_side.setter
+    def limit_side(self,value):
+        self._limit_side = value
 
     @property
     def stockInterval(self):
